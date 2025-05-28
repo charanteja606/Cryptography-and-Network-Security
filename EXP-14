@@ -1,0 +1,30 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#define LEN 14  
+void encrypt(char *plain, int key[], char *cipher) {
+    for (int i = 0; i < LEN; i++)
+        cipher[i] = ((plain[i] - 'a' + key[i]) % 26) + 'a';
+}
+void decrypt_key(char *cipher, char *target, int key[]) {
+    for (int i = 0; i < LEN; i++)
+        key[i] = (cipher[i] - target[i] + 26) % 26;
+}
+int main() {
+    char plain1[LEN+1] = "sendmoremoney";
+    int key1[LEN] = {9, 0, 1, 7, 23, 15, 21, 14, 11, 11, 2, 8, 9, 0};
+    char cipher1[LEN+1];
+    encrypt(plain1, key1, cipher1);
+    cipher1[LEN] = '\0';
+
+    printf("a) Ciphertext: %s\n", cipher1);
+    char plain2[LEN+1] = "cashnotneeded";
+    int key2[LEN];
+    decrypt_key(cipher1, plain2, key2);
+
+    printf("b) Key to decrypt to 'cashnotneeded': ");
+    for (int i = 0; i < LEN; i++)
+        printf("%d ", key2[i]);
+    printf("\n");
+    return 0;
+}

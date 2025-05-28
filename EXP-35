@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <string.h>
+
+#define BLOCK_SIZE 8
+
+void pad(unsigned char* block, int len) {
+    block[len] = 0x80;  // 1 bit (10000000)
+    for (int i = len + 1; i < BLOCK_SIZE; i++)
+        block[i] = 0x00; // Remaining 0 bits
+}
+
+// Simple XOR cipher (not secure, for mode demonstration only)
+void xor_encrypt(unsigned char* block, unsigned char* key) {
+    for (int i = 0; i < BLOCK_SIZE; i++)
+        block[i] ^= key[i];
+}
+
+void ECB(unsigned char* data, int len, unsigned char* key) {
+    for (int i = 0; i < len; i += BLOCK_SIZE)
+        xor_encrypt(&data[i], key);
+}
+
+void CBC(unsigned char* data, int len, unsigned char* key, unsigned char* iv) {
+    unsigned char temp[BLOCK_SIZE];
+    for (int i = 0; i < len; i += BLOCK_SIZE) {
+        for (int j = 0; j < BLOCK_SIZE; j++)
+            data[i + j] ^= iv[j];
+        xor_encrypt(&data[i], key);
+        memcpy(iv, &data[i], BLOCK_SIZE);
+    }
+}
+
+void CFB(unsigned char* data, int len, unsigned char* key, unsigned char* iv) {
+    unsigned char temp[BLOCK_SIZE];
+    for (int i = 0; i < len; i += BLOCK_SIZE) {
+        memcpy(temp, iv, BLOCK_SIZE);
+        xor_encrypt(temp, key);
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            iv[j] = data[i + j];
+            data[i + j] ^= temp[j];
+        }
+    }
+}
+
+void print_hex(unsigned char* data, int len) {
+    for (int i = 0; i < len; i++) printf("%02X ", data[i]);
+    printf("\n");
+}
+
+int main() {
+    unsigned char plaintext[BLOCK_SIZE * 2] = "HELLO123";  // 8 bytes
+    unsigned char key[BLOCK_SIZE] = "MYSECRET";
+    unsigned char data[BLOCK_SIZE * 2];
+    unsigned char iv[BLOCK_SIZE] = "INITVEC";
+
+    memcpy(data, plaintext, BLOCK_SIZE);
+    pad(data, BLOCK_SIZE); // Add padding block even if not needed
+
+    printf("ECB: ");
+    ECB(data, BLOCK_SIZE * 2, key);
+    print_hex(data, BLOCK_SIZE * 2);
+
+    memcpy(data, plaintext, BLOCK_SIZE);
+    pad(data, BLOCK_SIZE);
+    unsigned char iv1[BLOCK_SIZE] = "INITVEC";
+    printf("CBC: ");
+    CBC(data, BLOCK_SIZE * 2, key, iv1);
+    print_hex(data, BLOCK_SIZE * 2);
+
+    memcpy(data, plaintext, BLOCK_SIZE);
+    pad(data, BLOCK_SIZE);
+    unsigned char iv2[BLOCK_SIZE] = "INITVEC";
+    printf("CFB: ");
+    CFB(data, BLOCK_SIZE * 2, key, iv2);
+    print_hex(data, BLOCK_SIZE * 2);
+
+    return 0;
+}

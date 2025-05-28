@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_LEN 1000
+char eng_freq[] = "ETAOINSHRDLCUMWFGYPBVKJXQZ";
+void count_freq(const char *text, int freq[26]) {
+    for (int i = 0; i < 26; i++) freq[i] = 0;
+    for (int i = 0; text[i]; i++) {
+        if (isalpha(text[i])) {
+            freq[toupper(text[i]) - 'A']++;
+        }
+    }
+}
+int max_freq_index(int freq[26], int used[26]) {
+    int max = -1, idx = -1;
+    for (int i = 0; i < 26; i++) {
+        if (!used[i] && freq[i] > max) {
+            max = freq[i];
+            idx = i;
+        }
+    }
+    return idx;
+}
+void generate_guesses(char *cipher, int top_n) {
+    int freq[26], used[26], map[26];
+    count_freq(cipher, freq);
+
+    for (int guess = 0; guess < top_n; guess++) {
+        memset(used, 0, sizeof(used));
+
+        for (int i = 0; i < 26; i++) {
+            int ci = max_freq_index(freq, used);
+            if (ci == -1 || i >= strlen(eng_freq)) break;
+            map[ci] = eng_freq[(i + guess) % 26] - 'A';
+            used[ci] = 1;
+        }
+        printf("Guess #%d: ", guess + 1);
+        for (int i = 0; cipher[i]; i++) {
+            if (isalpha(cipher[i])) {
+                char base = isupper(cipher[i]) ? 'A' : 'a';
+                int ci = toupper(cipher[i]) - 'A';
+                printf("%c", isupper(cipher[i]) ? map[ci] + 'A' : map[ci] + 'a');
+            } else {
+                putchar(cipher[i]);
+            }
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    char cipher[MAX_LEN];
+    int top_n;
+    printf("Enter ciphertext: ");
+    fgets(cipher, MAX_LEN, stdin);
+    cipher[strcspn(cipher, "\n")] = '\0';
+    printf("Enter number of top guesses: ");
+    scanf("%d", &top_n);
+    generate_guesses(cipher, top_n);
+    return 0;
+}

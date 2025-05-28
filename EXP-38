@@ -1,0 +1,58 @@
+#include <stdio.h>
+
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++)
+        if ((a * x) % m == 1) return x;
+    return -1;
+}
+
+void matrixInverse(int key[2][2], int inv[2][2], int mod) {
+    int det = (key[0][0]*key[1][1] - key[0][1]*key[1][0]) % mod;
+    if (det < 0) det += mod;
+    int invDet = modInverse(det, mod);
+
+    inv[0][0] =  key[1][1] * invDet % mod;
+    inv[0][1] = -key[0][1] * invDet % mod;
+    inv[1][0] = -key[1][0] * invDet % mod;
+    inv[1][1] =  key[0][0] * invDet % mod;
+
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < 2; j++)
+            if (inv[i][j] < 0) inv[i][j] += mod;
+}
+
+void multiply(int a[2][2], int b[2], int res[2], int mod) {
+    for (int i = 0; i < 2; i++) {
+        res[i] = 0;
+        for (int j = 0; j < 2; j++)
+            res[i] += a[i][j] * b[j];
+        res[i] %= mod;
+    }
+}
+
+int main() {
+    int mod = 26;
+
+    // Known plaintext: "HI" = [7, 8], "LO" = [11, 14]
+    int P[2][2] = {{7, 8}, {11, 14}};
+
+    // Corresponding ciphertext: "FN" = [5, 13], "UV" = [20, 21]
+    int C[2][2] = {{5, 13}, {20, 21}};
+
+    // Compute inverse of plaintext matrix
+    int P_inv[2][2];
+    matrixInverse(P, P_inv, mod);
+
+    // Solve for key: K = C * P⁻¹ mod 26
+    int key[2][2];
+    for (int i = 0; i < 2; i++)
+        multiply(P_inv, C[i], key[i], mod);
+
+    // Output recovered key
+    printf("Recovered Hill Cipher Key Matrix:\n");
+    for (int i = 0; i < 2; i++)
+        printf("[ %d %d ]\n", key[i][0], key[i][1]);
+
+    return 0;
+}

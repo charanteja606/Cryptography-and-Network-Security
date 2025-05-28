@@ -1,0 +1,48 @@
+#include <stdio.h>
+int mod26(int x) {
+    x %= 26;
+    return x < 0 ? x + 26 : x;
+}
+int modInverse(int a) {
+    for (int i = 1; i < 26; i++)
+        if ((a * i) % 26 == 1)
+            return i;
+    return -1;
+}
+void invertMatrix(int m[2][2], int inv[2][2]) {
+    int det = mod26(m[0][0]*m[1][1] - m[0][1]*m[1][0]);
+    int invDet = modInverse(det);
+    inv[0][0] = mod26( m[1][1] * invDet);
+    inv[0][1] = mod26(-m[0][1] * invDet);
+    inv[1][0] = mod26(-m[1][0] * invDet);
+    inv[1][1] = mod26( m[0][0] * invDet);
+}
+
+// Multiply 2x2 and 2x2 matrix mod 26
+void multiply(int a[2][2], int b[2][2], int res[2][2]) {
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < 2; j++) {
+            res[i][j] = 0;
+            for (int k = 0; k < 2; k++)
+                res[i][j] += a[i][k] * b[k][j];
+            res[i][j] = mod26(res[i][j]);
+        }
+}
+void printMatrix(int m[2][2]) {
+    for (int i = 0; i < 2; i++)
+        printf("| %2d %2d |\n", m[i][0], m[i][1]);
+}
+int main() {
+    int P[2][2] = {{7, 4}, {11, 11}};
+    int C[2][2] = {{3, 14}, {13, 19}}; 
+
+    int Pinv[2][2], K[2][2];
+
+    invertMatrix(P, Pinv);
+    multiply(C, Pinv, K); // K = C × P⁻¹ mod 26
+
+    printf("Recovered Key Matrix:\n");
+    printMatrix(K);
+
+    return 0;
+}

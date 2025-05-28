@@ -1,0 +1,41 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/evp.h>
+
+void encrypt_decrypt(const char *mode_name, const EVP_CIPHER *cipher, int use_cbc) {
+    unsigned char key[16] = "1234567890123456";
+    unsigned char iv[16]  = "ivvector12345678";
+    unsigned char plaintext[] = "BLOCK1_BLOCK2_BLOCK3";
+    unsigned char ciphertext[128], decrypted[128];
+    int len, clen = 0, dlen = 0;
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+
+    // Encrypt
+    EVP_EncryptInit_ex(ctx, cipher, NULL, key, use_cbc ? iv : NULL);
+    EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, strlen((char *)plaintext));
+    clen = len;
+    EVP_EncryptFinal_ex(ctx, ciphertext + len, &len);
+    clen += len;
+
+    // Simulate error in 1st block (flip a bit)
+    ciphertext[5] ^= 0x01;
+
+    // Decrypt
+    EVP_CIPHER_CTX_reset(ctx);
+    EVP_DecryptInit_ex(ctx, cipher, NULL, key, use_cbc ? iv : NULL);
+    EVP_DecryptUpdate(ctx, decrypted, &len, ciphertext, clen);
+    dlen = len;
+    EVP_DecryptFinal_ex(ctx, decrypted + len, &len);
+    dlen += len;
+    decrypted[dlen] = '\0';
+
+    printf("\nMode: %s\nDecrypted: %s\n", mode_name, decrypted);
+    EVP_CIPHER_CTX_free(ctx);
+}
+
+int main() {
+    encrypt_decrypt("ECB", EVP_aes_128_ecb(), 0);
+    encrypt_decrypt("CBC", EVP_aes_128_cbc(), 1);
+    return 0;
+}

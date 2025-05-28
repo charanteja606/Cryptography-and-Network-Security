@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <string.h>
+
+#define BLOCK_SIZE 16
+
+// Simple XOR-based block cipher for demonstration (NOT secure)
+void encrypt_block(unsigned char *key, unsigned char *input, unsigned char *output) {
+    for (int i = 0; i < BLOCK_SIZE; i++)
+        output[i] = input[i] ^ key[i];
+}
+
+// CBC-MAC: single-block or multi-block message
+void cbc_mac(unsigned char *key, unsigned char *message, int length, unsigned char *tag) {
+    unsigned char iv[BLOCK_SIZE] = {0};
+    unsigned char buffer[BLOCK_SIZE];
+
+    for (int i = 0; i < length; i += BLOCK_SIZE) {
+        for (int j = 0; j < BLOCK_SIZE; j++)
+            buffer[j] = iv[j] ^ message[i + j];
+        encrypt_block(key, buffer, iv);
+    }
+    memcpy(tag, iv, BLOCK_SIZE);
+}
+
+int main() {
+    unsigned char key[BLOCK_SIZE] = "ThisIsASecretKey";
+    unsigned char X[BLOCK_SIZE]   = "Attack at dawn!";
+    unsigned char T[BLOCK_SIZE];
+
+    // Step 1: Compute T = MAC(K, X)
+    cbc_mac(key, X, BLOCK_SIZE, T);
+
+    // Step 2: Create forged block: X ⊕ T
+    unsigned char forged_block[BLOCK_SIZE];
+    for (int i = 0; i < BLOCK_SIZE; i++)
+        forged_block[i] = X[i] ^ T[i];
+
+    // Step 3: Construct two-block message: X || (X ⊕ T)
+    unsigned char forged_message[2 * BLOCK_SIZE];
+    memcpy(forged_message, X, BLOCK_SIZE);
+    memcpy(forged_message + BLOCK_SIZE, forged_block, BLOCK_SIZE);
+
+    // Step 4: Compute MAC(K, X || (X ⊕ T))
+    unsigned char forged_mac[BLOCK_SIZE];
+    cbc_mac(key, forged_message, 2 * BLOCK_SIZE, forged_mac);
+
+    // Show results
+    printf("Original MAC T:         ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X", T[i]);
+    printf("\nForged CBC-MAC (2 blk): ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X", forged_mac[i]);
+    printf("\n");
+
+    // Prove that forged MAC == original MAC
+    if (memcmp(T, forged_mac, BLOCK_SIZE) == 0)
+        printf("✅ Forgery successful: CBC-MAC(X) == CBC-MAC(X || (X ⊕ T))\n");
+    else
+        printf("❌ Forgery failed.\n");
+
+    return 0;
+}

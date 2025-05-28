@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define TOTAL_LANES 25
+#define CAPACITY_LANES 9
+#define RATE_LANES (TOTAL_LANES - CAPACITY_LANES)
+
+int main() {
+    unsigned long long state[TOTAL_LANES] = {0};  // SHA-3 state lanes
+    int iterations = 0;
+    srand(time(NULL));
+
+    // Initialize input lanes (rate part) with nonzero random values
+    for (int i = 0; i < RATE_LANES; i++)
+        state[i] = rand() | 1;  // Ensure non-zero
+
+    // Track which capacity lanes are zero
+    int cap_nonzero[CAPACITY_LANES] = {0};
+    int remaining = CAPACITY_LANES;
+
+    while (remaining > 0) {
+        iterations++;
+
+        // Simulate diffusion: XOR a random rate lane into each capacity lane
+        for (int i = 0; i < CAPACITY_LANES; i++) {
+            int cap_idx = RATE_LANES + i;
+            state[cap_idx] ^= state[rand() % RATE_LANES];
+
+            if (!cap_nonzero[i] && state[cap_idx] != 0) {
+                cap_nonzero[i] = 1;
+                remaining--;
+            }
+        }
+    }
+
+    printf("All capacity lanes became nonzero after %d iterations.\n", iterations);
+    return 0;
+}

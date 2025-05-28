@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+int key[2][2] = {{9, 4}, {5, 7}};
+int invKey[2][2]; // Will compute inverse mod 26
+
+int mod26(int x) {
+    x %= 26;
+    return x < 0 ? x + 26 : x;
+}
+int modInverse(int a) {
+    for (int i = 1; i < 26; i++)
+        if ((a * i) % 26 == 1)
+            return i;
+    return -1;
+}
+void computeInverseKey() {
+    int det = mod26(key[0][0]*key[1][1] - key[0][1]*key[1][0]);
+    int invDet = modInverse(det);
+    invKey[0][0] = mod26( key[1][1] * invDet);
+    invKey[0][1] = mod26(-key[0][1] * invDet);
+    invKey[1][0] = mod26(-key[1][0] * invDet);
+    invKey[1][1] = mod26( key[0][0] * invDet);
+}
+void preprocess(char *in, char *out) {
+    int j = 0;
+    for (int i = 0; in[i]; i++)
+        if (isalpha(in[i]))
+            out[j++] = toupper(in[i]);
+    if (j % 2) out[j++] = 'X'; // pad with 'X' if needed
+    out[j] = '\0';
+}
+void hillCipher(char *text, int mat[2][2]) {
+    for (int i = 0; text[i]; i += 2) {
+        int a = text[i] - 'A';
+        int b = text[i+1] - 'A';
+        int c1 = mod26(mat[0][0]*a + mat[0][1]*b);
+        int c2 = mod26(mat[1][0]*a + mat[1][1]*b);
+        printf("%c%c", c1 + 'A', c2 + 'A');
+    }
+}
+int main() {
+    char plain[] = "meet me at the usual place at ten rather than eight oclock";
+    char clean[200];
+    preprocess(plain, clean);
+
+    printf("Plaintext:  %s\n", clean);
+    printf("Encrypted:  ");
+    hillCipher(clean, key);
+    computeInverseKey();
+    printf("\nDecrypted:  ");
+    hillCipher(clean, invKey); 
+
+    return 0;
+}

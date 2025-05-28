@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_LEN 1000
+char freq_order[] = "ETAOINSHRDLCUMWFGYPBVKJXQZ";
+void count_frequencies(char *text, int freq[26]) {
+    for (int i = 0; i < 26; i++) freq[i] = 0;
+    for (int i = 0; text[i]; i++) {
+        if (isalpha(text[i]))
+            freq[toupper(text[i]) - 'A']++;
+    }
+}
+int find_max_index(int freq[26]) {
+    int max = 0;
+    for (int i = 1; i < 26; i++)
+        if (freq[i] > freq[max]) max = i;
+    return max;
+}
+void decrypt(char *cipher, int shift, char *plain) {
+    for (int i = 0; cipher[i]; i++) {
+        if (isalpha(cipher[i])) {
+            char base = isupper(cipher[i]) ? 'A' : 'a';
+            plain[i] = ((cipher[i] - base - shift + 26) % 26) + base;
+        } else {
+            plain[i] = cipher[i];
+        }
+    }
+    plain[strlen(cipher)] = '\0';
+}
+
+int main() {
+    char cipher[MAX_LEN];
+    int top_n;
+
+    printf("Enter ciphertext: ");
+    fgets(cipher, MAX_LEN, stdin);
+    cipher[strcspn(cipher, "\n")] = 0;
+
+    printf("Enter number of top guesses: ");
+    scanf("%d", &top_n);
+
+    int freq[26];
+    count_frequencies(cipher, freq);
+    for (int i = 0, guesses = 0; i < 26 && guesses < top_n; i++) {
+        int max_index = find_max_index(freq);
+        int shift = (max_index - (freq_order[i] - 'A') + 26) % 26;
+        char guess[MAX_LEN];
+        decrypt(cipher, shift, guess);
+        printf("Guess #%d (shift=%d): %s\n", ++guesses, shift, guess);
+        freq[max_index] = -1;  // exclude this max for next iteration
+    }
+
+    return 0;
+}

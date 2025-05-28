@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <string.h>
+
+#define KEY_SIZE 56
+#define HALF_SIZE 28
+#define SUBKEY_SIZE 48
+
+// Sample 56-bit key (after PC-1 permutation)
+char initial_key[KEY_SIZE + 1] = "11010011001101000101011101111001100110111011110011011111";
+
+// Left shift schedule
+int shift_table[16] = {1, 1, 2, 2, 2, 2, 2, 2,
+                       1, 2, 2, 2, 2, 2, 2, 1};
+
+// Left circular shift
+void left_shift(char *half, int shifts) {
+    char temp[HALF_SIZE];
+    strncpy(temp, half, shifts);
+    memmove(half, half + shifts, HALF_SIZE - shifts);
+    memcpy(half + HALF_SIZE - shifts, temp, shifts);
+}
+
+// Generate 16 subkeys with 24 bits from left and 24 bits from right
+void generate_subkeys(char subkeys[16][SUBKEY_SIZE + 1]) {
+    char C[HALF_SIZE + 1], D[HALF_SIZE + 1];
+
+    strncpy(C, initial_key, HALF_SIZE);
+    C[HALF_SIZE] = '\0';
+
+    strncpy(D, initial_key + HALF_SIZE, HALF_SIZE);
+    D[HALF_SIZE] = '\0';
+
+    for (int i = 0; i < 16; i++) {
+        left_shift(C, shift_table[i]);
+        left_shift(D, shift_table[i]);
+
+        // Simulate PC-2 by picking first 24 bits from each half
+        strncpy(subkeys[i], C, 24);
+        strncpy(subkeys[i] + 24, D, 24);
+        subkeys[i][SUBKEY_SIZE] = '\0';
+    }
+}
+
+int main() {
+    char subkeys[16][SUBKEY_SIZE + 1];
+
+    generate_subkeys(subkeys);
+
+    printf("DES Subkeys (48-bit) with 24-24 bit split:\n");
+    for (int i = 0; i < 16; i++) {
+        printf("K%-2d: %s\n", i + 1, subkeys[i]);
+    }
+
+    return 0;
+}

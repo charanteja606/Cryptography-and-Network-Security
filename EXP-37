@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <ctype.h>
+
+int modInverse(int a) {
+    for (int i = 1; i < 26; i++)
+        if ((a * i) % 26 == 1)
+            return i;
+    return -1; // No inverse
+}
+
+char encryptChar(char ch, int a, int b) {
+    if (isalpha(ch)) {
+        char base = isupper(ch) ? 'A' : 'a';
+        return ((a * (ch - base) + b) % 26) + base;
+    }
+    return ch;
+}
+
+char decryptChar(char ch, int a, int b) {
+    int a_inv = modInverse(a);
+    if (a_inv == -1) return '?';
+    char base = isupper(ch) ? 'A' : 'a';
+    return (a_inv * ((ch - base - b + 26) % 26)) % 26 + base;
+}
+
+int main() {
+    char msg[] = "Affine Cipher";
+    int a = 5, b = 8;  // 'a' must be coprime with 26
+
+    printf("Original: %s\n", msg);
+    for (int i = 0; msg[i]; i++)
+        msg[i] = encryptChar(msg[i], a, b);
+    printf("Encrypted: %s\n", msg);
+    for (int i = 0; msg[i]; i++)
+        msg[i] = decryptChar(msg[i], a, b);
+    printf("Decrypted: %s\n", msg);
+    return 0;
+}

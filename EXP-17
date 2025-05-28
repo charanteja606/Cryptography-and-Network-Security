@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <string.h>
+#define KEY_SIZE 56
+#define ROUND_KEY_SIZE 48
+int shift_table[16] = {1, 1, 2, 2, 2, 2, 2, 2,
+                       1, 2, 2, 2, 2, 2, 2, 1};
+char key[KEY_SIZE + 1] = "10100011010110100011110011010101101001101101010011001100";
+void left_shift(char *half, int shifts) {
+    char temp[KEY_SIZE / 2];
+    strncpy(temp, half, shifts);
+    memmove(half, half + shifts, 28 - shifts);
+    memcpy(half + 28 - shifts, temp, shifts);
+}
+void generate_decryption_keys(char round_keys[16][ROUND_KEY_SIZE + 1]) {
+    char left[29], right[29], combined[KEY_SIZE + 1];
+    strncpy(left, key, 28); left[28] = '\0';
+    strncpy(right, key + 28, 28); right[28] = '\0';
+    char all_keys[16][ROUND_KEY_SIZE + 1];
+    for (int i = 0; i < 16; i++) {
+        left_shift(left, shift_table[i]);
+        left_shift(right, shift_table[i]);
+        snprintf(combined, sizeof(combined), "%s%s", left, right);
+        strncpy(all_keys[i], combined, ROUND_KEY_SIZE);
+        all_keys[i][ROUND_KEY_SIZE] = '\0';
+    }
+    for (int i = 0; i < 16; i++) {
+        strcpy(round_keys[i], all_keys[15 - i]);
+    }
+}
+int main() {
+    char round_keys[16][ROUND_KEY_SIZE + 1];
+    generate_decryption_keys(round_keys);
+    printf("DES Decryption Round Keys (K16 to K1):\n");
+    for (int i = 0; i < 16; i++) {
+        printf("K%-2d: %s\n", 16 - i, round_keys[i]);
+    }
+    return 0;
+}

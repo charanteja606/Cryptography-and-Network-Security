@@ -1,0 +1,25 @@
+#include <stdio.h>
+// Function to compute GCD
+int gcd(int a, int b) {
+    while (b != 0) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+int main() {
+    int n = 3599;            // Public modulus (n = p × q)
+    int known_plaintext = 1770;  // Known plaintext that shares a factor with n
+
+    int factor = gcd(known_plaintext, n);
+
+    if (factor > 1 && factor < n) {
+        printf("Found factor of n: %d\n", factor);
+        printf("The other factor is: %d\n", n / factor);
+    } else {
+        printf("No non-trivial factor found.\n");
+    }
+
+    return 0;
+}
